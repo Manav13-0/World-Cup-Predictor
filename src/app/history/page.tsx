@@ -1,0 +1,55 @@
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { PageShell } from "@/components/page-shell";
+import { Card, CardContent } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatPredictionLabel } from "@/lib/utils";
+
+export default async function HistoryPage() {
+  const session = await auth();
+  const predictions = await prisma.prediction.findMany({
+    where: { userId: session?.user.id },
+    include: { match: { include: { homeTeam: true, awayTeam: true } } },
+    orderBy: { createdAt: "desc" }
+  });
+
+  return (
+    <PageShell title="Prediction History" description="Every pick, match result, and awarded point total.">
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Match</TableHead>
+                <TableHead>Prediction</TableHead>
+                <TableHead>Result</TableHead>
+                <TableHead className="text-right">Points</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {predictions.map((prediction) => (
+                <TableRow key={prediction.id}>
+                  <TableCell>
+                    {prediction.match.homeTeam.name} vs {prediction.match.awayTeam.name}
+                  </TableCell>
+                  <TableCell>
+                    {formatPredictionLabel(
+                      prediction.prediction,
+                      prediction.match.homeTeam.name,
+                      prediction.match.awayTeam.name
+                    )}{" "}
+                    {prediction.predictedHomeScore}-{prediction.predictedAwayScore}
+                  </TableCell>
+                  <TableCell>
+                    {prediction.match.homeScore ?? "-"}-{prediction.match.awayScore ?? "-"}
+                  </TableCell>
+                  <TableCell className="text-right">{prediction.points}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </PageShell>
+  );
+}

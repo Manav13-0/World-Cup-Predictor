@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  email              String       @unique
+  emailVerified      DateTime?
+  password           String?
+  image              String?
+  role               Role         @default(USER)
+  totalPoints        Int          @default(0)
+  correctPredictions Int          @default(0)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  accounts           Account[]
+  sessions           Session[]
+  predictions        Prediction[]
+  leaguesOwned       League[]
+  memberships        LeagueMember[]
+
+  @@index([totalPoints, correctPredictions, createdAt])
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Team {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  apiTeamId   Int     @unique
+  name        String
+  shortName   String?
+  code        String?
+  flag        String?
+  fifaRanking Int?
+  homeMatches Match[] @relation("HomeTeam")
+  awayMatches Match[] @relation("AwayTeam")
+}
+
+model Match {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  apiMatchId  Int          @unique
+  homeTeamId  String       @db.ObjectId
+  awayTeamId  String       @db.ObjectId
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  stadium     String?
+  city        String?
+  round       String?
+  group       String?
+  homeScore   Int?
+  awayScore   Int?
+  status      MatchStatus
+  winner      String?
+  kickoff     DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  predictions Prediction[]
+
+  @@index([status, kickoff])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+}
+
+model Prediction {
+  id                 String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String         @db.ObjectId
+  matchId            String         @db.ObjectId
+  prediction         PredictionType
+  predictedHomeScore Int?
+  predictedAwayScore Int?
+  points             Int            @default(0)
+  isCorrect          Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  user               User           @relation(fields: [userId], references: [id])
+  match              Match          @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+}
+
+model League {
+  id        String         @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  code      String         @unique
+  ownerId   String         @db.ObjectId
+  owner     User           @relation(fields: [ownerId], references: [id])
+  createdAt DateTime       @default(now())
+  members   LeagueMember[]
+}
+
+model LeagueMember {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  leagueId String   @db.ObjectId
+  userId   String   @db.ObjectId
+  joinedAt DateTime @default(now())
+  league   League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, userId])
+  @@index([userId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  CANCELLED
+}
+
+enum PredictionType {
+  HOME_WIN
+  AWAY_WIN
+  DRAW
+}
