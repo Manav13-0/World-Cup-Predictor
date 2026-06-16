@@ -35,3 +35,13 @@ export const env = envSchema.parse({
   SOCKET_SERVER_URL: process.env.SOCKET_SERVER_URL,
   CRON_SECRET: process.env.CRON_SECRET
 });
+
+export function resolvedFootballDataEnv(overrides?: {
+  competition?: string;
+  season?: number;
+}) {
+  return {
+    competition: overrides?.competition?.trim() || env.FOOTBALL_DATA_COMPETITION_CODE,
+    season: overrides?.season ?? env.FOOTBALL_DATA_SEASON
+  };
+}

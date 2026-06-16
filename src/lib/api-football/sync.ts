@@ -114,8 +114,8 @@ async function upsertFixture(fixture: ApiFixture) {
   return match;
 }
 
-export async function syncTeams() {
-  const teams = await provider().teams();
+export async function syncTeams(options?: { competition?: string; season?: number }) {
+  const teams = await provider().teams(options);
   const validTeams = teams.filter((item) => hasTeamId(item.team));
 
   await Promise.all(
@@ -142,21 +142,21 @@ export async function syncTeams() {
   return validTeams.length;
 }
 
-export async function syncFixtures() {
-  await syncTeams();
-  const fixtures = await provider().fixtures();
+export async function syncFixtures(options?: { competition?: string; season?: number }) {
+  await syncTeams(options);
+  const fixtures = await provider().fixtures(options);
   const matches = await Promise.all(fixtures.map(upsertFixture));
   return matches.filter(Boolean).length;
 }
 
-export async function syncLiveMatches() {
-  const fixtures = await provider().liveMatches();
+export async function syncLiveMatches(options?: { competition?: string; season?: number }) {
+  const fixtures = await provider().liveMatches(options);
   const matches = await Promise.all(fixtures.map(upsertFixture));
   return matches.filter(Boolean).length;
 }
 
-export async function syncCompletedMatches() {
-  const fixtures = await provider().completedMatches();
+export async function syncCompletedMatches(options?: { competition?: string; season?: number }) {
+  const fixtures = await provider().completedMatches(options);
   const matches = await Promise.all(fixtures.map(upsertFixture));
   return matches.filter(Boolean).length;
 }

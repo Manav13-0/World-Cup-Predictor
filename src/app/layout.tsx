@@ -4,6 +4,7 @@ import { Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { Providers } from "@/components/providers";
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/logout-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,9 +49,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </nav>
                 <div className="flex items-center gap-2">
                   {session?.user ? (
-                    <Button asChild variant="secondary" size="sm">
-                      <Link href="/dashboard">{session.user.name ?? "Account"}</Link>
-                    </Button>
+                    <>
+                      <Button asChild variant="secondary" size="sm">
+                        <Link href="/dashboard">{session.user.name ?? "Account"}</Link>
+                      </Button>
+                      <LogoutButton />
+                    </>
                   ) : (
                     <>
                       <Button asChild variant="ghost" size="sm">

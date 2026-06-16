@@ -1,5 +1,5 @@
 import { cacheGet, cacheSet } from "@/lib/redis";
-import { env } from "@/lib/env";
+import { env, resolvedFootballDataEnv } from "@/lib/env";
 
 const BASE_URL = "https://api.football-data.org/v4";
 
@@ -72,9 +72,10 @@ async function request<T>(path: string, ttlSeconds = 60, retries = 2): Promise<T
 }
 
 export const footballData = {
-  fixtures: async () => {
+  fixtures: async (options?: { competition?: string; season?: number }) => {
+    const { competition, season } = resolvedFootballDataEnv(options);
     const data = await request<FootballDataCompetitionResponse>(
-      `/competitions/${env.FOOTBALL_DATA_COMPETITION_CODE}/matches?season=${env.FOOTBALL_DATA_SEASON}`,
+      `/competitions/${competition}/matches?season=${season}`,
       300
     );
 
@@ -114,9 +115,10 @@ export const footballData = {
       }
     }));
   },
-  liveMatches: async () => {
+  liveMatches: async (options?: { competition?: string; season?: number }) => {
+    const { competition, season } = resolvedFootballDataEnv(options);
     const data = await request<FootballDataCompetitionResponse>(
-      `/competitions/${env.FOOTBALL_DATA_COMPETITION_CODE}/matches?season=${env.FOOTBALL_DATA_SEASON}&status=IN_PLAY`,
+      `/competitions/${competition}/matches?season=${season}&status=IN_PLAY`,
       15
     );
 
@@ -156,9 +158,10 @@ export const footballData = {
       }
     }));
   },
-  completedMatches: async () => {
+  completedMatches: async (options?: { competition?: string; season?: number }) => {
+    const { competition, season } = resolvedFootballDataEnv(options);
     const data = await request<FootballDataCompetitionResponse>(
-      `/competitions/${env.FOOTBALL_DATA_COMPETITION_CODE}/matches?season=${env.FOOTBALL_DATA_SEASON}&status=FINISHED`,
+      `/competitions/${competition}/matches?season=${season}&status=FINISHED`,
       120
     );
 
@@ -198,9 +201,10 @@ export const footballData = {
       }
     }));
   },
-  teams: async () => {
+  teams: async (options?: { competition?: string; season?: number }) => {
+    const { competition, season } = resolvedFootballDataEnv(options);
     const data = await request<FootballDataCompetitionResponse>(
-      `/competitions/${env.FOOTBALL_DATA_COMPETITION_CODE}/teams?season=${env.FOOTBALL_DATA_SEASON}`,
+      `/competitions/${competition}/teams?season=${season}`,
       86400
     );
 

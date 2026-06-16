@@ -4,10 +4,21 @@ import { getUserRank } from "@/lib/leaderboard";
 import { PageShell } from "@/components/page-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PerformanceChart } from "@/components/performance-chart";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const userId = session?.user.id ?? "";
+  let userId = session?.user.id ?? "";
+
+  if (!userId && session?.user.email) {
+    const dbUser = await prisma.user.findUnique({ where: { email: session.user.email } });
+    userId = dbUser?.id ?? "";
+  }
+
+  if (!userId) {
+    redirect("/login");
+  }
+
   const [predictions, rank] = await Promise.all([
     prisma.prediction.findMany({ where: { userId }, include: { match: true }, orderBy: { createdAt: "asc" } }),
     getUserRank(userId)

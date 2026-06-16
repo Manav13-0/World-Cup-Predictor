@@ -75,11 +75,13 @@ CRON_SECRET=
 
 ## Cron Jobs
 
-Configured in `vercel.json`:
+Configured in `vercel.json` for Vercel Hobby compatibility:
 
-- Fixture sync every 6 hours.
-- Live sync every minute.
-- Result sync every 5 minutes.
+- Fixture sync once per day.
+- Live sync once per day.
+- Result sync once per day.
+
+For more frequent syncs, use the admin sync buttons or upgrade to Pro.
 
 If `CRON_SECRET` is set, call cron routes with:
 

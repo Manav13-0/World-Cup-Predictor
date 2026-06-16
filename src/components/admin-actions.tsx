@@ -10,11 +10,19 @@ export function AdminActions() {
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  async function sync(path: string) {
+  async function sync(path: string, body?: Record<string, string>) {
     setMessage("Sync running...");
-    const response = await fetch(path, { method: "POST" });
-    const body = await response.json();
-    setMessage(response.ok ? `Synced ${body.synced} records.` : body.error ?? "Sync failed.");
+    const response = await fetch(path, {
+      method: "POST",
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const payload = await response.json();
+    setMessage(
+      response.ok
+        ? `Synced ${payload.synced} records using ${payload.provider} (${payload.competition} / ${payload.season}).`
+        : payload.error ?? "Sync failed."
+    );
   }
 
   async function createManualMatch(event: React.FormEvent<HTMLFormElement>) {
@@ -50,6 +58,25 @@ export function AdminActions() {
 
   return (
     <div className="space-y-6">
+      <form
+        className="grid gap-3 rounded-md border p-4 md:grid-cols-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const form = new FormData(event.currentTarget);
+          sync("/api/admin/sync-fixtures", {
+            competition: String(form.get("competition") ?? "WC"),
+            season: String(form.get("season") ?? "2026")
+          });
+        }}
+      >
+        <Input name="competition" placeholder="Competition code" defaultValue="WC" />
+        <Input name="season" placeholder="Season" defaultValue="2026" />
+        <Button className="md:col-span-2" type="submit">
+          <RefreshCw size={16} />
+          Sync With Selection
+        </Button>
+      </form>
+
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => sync("/api/admin/sync-fixtures")}>
           <RefreshCw size={16} />

@@ -4,11 +4,23 @@ import { PageShell } from "@/components/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatPredictionLabel } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 export default async function HistoryPage() {
   const session = await auth();
+  let userId = session?.user.id ?? "";
+
+  if (!userId && session?.user.email) {
+    const dbUser = await prisma.user.findUnique({ where: { email: session.user.email } });
+    userId = dbUser?.id ?? "";
+  }
+
+  if (!userId) {
+    redirect("/login");
+  }
+
   const predictions = await prisma.prediction.findMany({
-    where: { userId: session?.user.id },
+    where: { userId },
     include: { match: { include: { homeTeam: true, awayTeam: true } } },
     orderBy: { createdAt: "desc" }
   });
