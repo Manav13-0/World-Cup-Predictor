@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { loadUserPredictionsWithMatches } from "@/lib/prediction-loaders";
 import { PageShell } from "@/components/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -20,11 +21,7 @@ export default async function HistoryPage() {
     redirect("/login");
   }
 
-  const predictions = await prisma.prediction.findMany({
-    where: { userId },
-    include: { match: { include: { homeTeam: true, awayTeam: true } } },
-    orderBy: { createdAt: "desc" }
-  });
+  const predictions = await loadUserPredictionsWithMatches(userId, "desc");
 
   return (
     <PageShell title="Prediction History" description="Every pick, match result, and awarded point total.">

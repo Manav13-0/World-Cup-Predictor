@@ -1,15 +1,12 @@
-import { prisma } from "@/lib/prisma";
 import { apiError, json, requireUser } from "@/lib/http";
 import { getUserRank } from "@/lib/leaderboard";
+import { loadUserPredictionsWithMatches } from "@/lib/prediction-loaders";
 
 export async function GET() {
   try {
     const user = await requireUser();
     const [predictions, rank] = await Promise.all([
-      prisma.prediction.findMany({
-        where: { userId: user.id },
-        include: { match: true }
-      }),
+      loadUserPredictionsWithMatches(user.id),
       getUserRank(user.id)
     ]);
 

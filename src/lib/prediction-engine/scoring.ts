@@ -10,6 +10,37 @@ function matchResult(match: Pick<Match, "homeScore" | "awayScore">): PredictionT
   return "DRAW";
 }
 
+function isWriteConflict(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return (
+    message.includes("write conflict") ||
+    message.includes("deadlock") ||
+    message.includes("Please retry your transaction") ||
+    message.includes("Transaction failed")
+  );
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function retryWriteConflict<T>(operation: () => Promise<T>, attempts = 5) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (!isWriteConflict(error) || attempt === attempts) {
+        throw error;
+      }
+
+      await wait(150 * attempt);
+    }
+  }
+
+  throw new Error("Write conflict retry failed.");
+}
+
 export function calculatePredictionPoints(
   match: Pick<Match, "homeScore" | "awayScore">,
   prediction: {
@@ -33,7 +64,7 @@ export function calculatePredictionPoints(
 export async function awardFinishedMatch(matchId: string) {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
-    include: { predictions: true }
+    include: { predictions: { select: { id: true } } }
   });
 
   if (!match || match.status !== "FINISHED") return { updated: 0 };
@@ -41,28 +72,54 @@ export async function awardFinishedMatch(matchId: string) {
   let updated = 0;
 
   for (const prediction of match.predictions) {
-    const score = calculatePredictionPoints(match, prediction);
+    const scored = await retryWriteConflict(async () =>
+      prisma.$transaction(async (tx) => {
+        const currentPrediction = await tx.prediction.findUnique({
+          where: { id: prediction.id }
+        });
 
-    await prisma.$transaction([
-      prisma.prediction.update({
-        where: { id: prediction.id },
-        data: {
-          points: score.points,
-          isCorrect: score.isCorrect
+        if (!currentPrediction) return false;
+
+        const user = await tx.user.findUnique({
+          where: { id: currentPrediction.userId },
+          select: { id: true }
+        });
+
+        if (!user) {
+          await tx.prediction.deleteMany({
+            where: { id: currentPrediction.id }
+          });
+
+          return false;
         }
-      }),
-      prisma.user.update({
-        where: { id: prediction.userId },
-        data: {
-          totalPoints: { increment: score.points - prediction.points },
-          correctPredictions: {
-            increment: Number(score.isCorrect) - Number(prediction.isCorrect)
+
+        const score = calculatePredictionPoints(match, currentPrediction);
+        const pointDelta = score.points - currentPrediction.points;
+        const correctDelta = Number(score.isCorrect) - Number(currentPrediction.isCorrect);
+
+        await tx.prediction.update({
+          where: { id: currentPrediction.id },
+          data: {
+            points: score.points,
+            isCorrect: score.isCorrect
           }
-        }
-      })
-    ]);
+        });
 
-    updated += 1;
+        if (pointDelta !== 0 || correctDelta !== 0) {
+          await tx.user.update({
+            where: { id: currentPrediction.userId },
+            data: {
+              totalPoints: { increment: pointDelta },
+              correctPredictions: { increment: correctDelta }
+            }
+          });
+        }
+
+        return true;
+      })
+    );
+
+    if (scored) updated += 1;
   }
 
   await cacheDel("leaderboard:global");
