@@ -42,3 +42,16 @@ export function formatPredictionLabel(
   if (prediction === "DRAW") return "Draw";
   return prediction === "HOME_WIN" ? `${homeTeamName} win` : `${awayTeamName} win`;
 }
+
+export function matchStatusLabel(status: string) {
+  switch (status) {
+    case "LIVE":
+      return "Live";
+    case "FINISHED":
+      return "Finished";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return "Scheduled";
+  }
+}

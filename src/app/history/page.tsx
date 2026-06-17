@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { PageShell } from "@/components/page-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { formatPredictionLabel } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
@@ -55,7 +56,9 @@ export default async function HistoryPage() {
                   <TableCell>
                     {prediction.match.homeScore ?? "-"}-{prediction.match.awayScore ?? "-"}
                   </TableCell>
-                  <TableCell className="text-right">{prediction.points}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge className="border-violet-400/20 bg-violet-400/10 text-violet-100">{prediction.points} pts</Badge>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

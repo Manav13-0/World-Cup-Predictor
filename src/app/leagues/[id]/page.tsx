@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageShell } from "@/components/page-shell";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { prisma } from "@/lib/prisma";
@@ -32,7 +33,10 @@ export default async function LeagueDetailsPage({ params }: { params: Promise<{ 
     <PageShell title={league.name} description={`Invite code: ${league.code}`}>
       <Card>
         <CardHeader>
-          <CardTitle>League Rankings</CardTitle>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>League Rankings</CardTitle>
+            <Badge className="border-violet-400/20 bg-violet-400/10 text-violet-100">{league.members.length} members</Badge>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>

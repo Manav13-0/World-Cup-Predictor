@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Match, Team } from "@prisma/client";
-import { CalendarClock, MapPin } from "lucide-react";
+import { CalendarClock, Circle, MapPin, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatKickoff } from "@/lib/utils";
+import { matchStatusLabel } from "@/lib/utils";
+import { TiltCard } from "@/components/tilt-card";
 
 type MatchWithTeams = Match & {
   homeTeam: Team;
@@ -13,48 +15,76 @@ type MatchWithTeams = Match & {
 };
 
 export function MatchCard({ match }: { match: MatchWithTeams }) {
+  const live = match.status === "LIVE";
+  const finished = match.status === "FINISHED";
+
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="border-b bg-muted/35">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">{match.round ?? "World Cup Match"}</CardTitle>
-          <Badge>{match.status}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-5 p-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <TeamIdentity team={match.homeTeam} align="right" />
-          <div className="rounded-md bg-background px-3 py-2 text-center font-semibold">
-            {match.homeScore ?? "-"} : {match.awayScore ?? "-"}
+    <TiltCard className="h-full">
+      <Card className="h-full overflow-hidden">
+        <CardHeader className="border-b border-white/10 bg-gradient-to-r from-white/[0.08] to-transparent">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">World Cup Fixture</p>
+              <CardTitle className="text-base">{match.round ?? "World Cup Match"}</CardTitle>
+            </div>
+            <Badge
+              className={
+                live
+                  ? "border-violet-400/20 bg-violet-400/15 text-violet-100"
+                  : finished
+                    ? "border-emerald-400/20 bg-emerald-400/15 text-emerald-100"
+                    : "border-amber-400/20 bg-amber-400/15 text-amber-100"
+              }
+            >
+              <Circle className={live ? "fill-violet-300 text-violet-300 animate-pulse" : "fill-current"} size={8} />
+              {matchStatusLabel(match.status)}
+            </Badge>
           </div>
-          <TeamIdentity team={match.awayTeam} />
-        </div>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p className="flex items-center gap-2">
-            <CalendarClock size={16} />
-            {formatKickoff(match.kickoff)}
-          </p>
-          <p className="flex items-center gap-2">
-            <MapPin size={16} />
-            {[match.stadium, match.city].filter(Boolean).join(", ") || "Venue TBC"}
-          </p>
-        </div>
-        <Button asChild className="w-full">
-          <Link href={`/matches/${match.id}`}>Open Match</Link>
-        </Button>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="space-y-5 p-5 sm:p-6">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+            <TeamIdentity team={match.homeTeam} align="right" />
+            <div className="min-w-[92px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.05] px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">Score</div>
+              <div className="mt-1 text-2xl font-semibold tracking-tight">
+                {match.homeScore ?? "-"} : {match.awayScore ?? "-"}
+              </div>
+            </div>
+            <TeamIdentity team={match.awayTeam} />
+          </div>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2">
+              <CalendarClock size={16} />
+              {formatKickoff(match.kickoff)}
+            </p>
+            <p className="flex items-center gap-2">
+              <MapPin size={16} />
+              {[match.stadium, match.city].filter(Boolean).join(", ") || "Venue TBC"}
+            </p>
+          </div>
+          <Button asChild className="w-full">
+            <Link href={`/matches/${match.id}`}>
+              Open Match
+              <ArrowUpRight size={16} />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </TiltCard>
   );
 }
 
 function TeamIdentity({ team, align = "left" }: { team: Team; align?: "left" | "right" }) {
   return (
-    <div className={align === "right" ? "text-right" : undefined}>
-      <div className="flex items-center gap-2" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
+    <div className={align === "right" ? "min-w-0 text-right" : "min-w-0"}>
+      <div className="flex min-w-0 items-center gap-2" style={{ justifyContent: align === "right" ? "flex-end" : "flex-start" }}>
         {team.flag ? (
-          <Image src={team.flag} alt="" width={28} height={28} className="h-7 w-7 rounded-full object-cover" />
+          <Image src={team.flag} alt={team.name} width={28} height={28} className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-white/20" />
         ) : null}
-        <span className="font-medium">{team.shortName ?? team.name}</span>
+        <div className={align === "right" ? "min-w-0" : "min-w-0"}>
+          <span className="block break-words text-sm font-medium leading-tight sm:text-base">{team.shortName ?? team.name}</span>
+          <span className="text-[10px] uppercase tracking-[0.28em] text-muted-foreground">{team.code ?? "Team"}</span>
+        </div>
       </div>
     </div>
   );

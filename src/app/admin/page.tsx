@@ -1,5 +1,7 @@
 import { AdminActions } from "@/components/admin-actions";
+import { AnimatedCounter } from "@/components/animated-counter";
 import { PageShell } from "@/components/page-shell";
+import { TiltCard } from "@/components/tilt-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 
@@ -20,12 +22,16 @@ export default async function AdminPage() {
           ["Leagues", leagues],
           ["Predictions", predictions]
         ].map(([label, value]) => (
-          <Card key={label}>
-            <CardContent className="p-5">
-              <p className="text-sm text-muted-foreground">{label}</p>
-              <p className="mt-2 text-3xl font-semibold">{value}</p>
-            </CardContent>
-          </Card>
+          <TiltCard key={label as string} className="h-full">
+            <Card className="h-full">
+              <CardContent className="p-5">
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <p className="mt-2 text-3xl font-semibold">
+                  <AnimatedCounter value={Number(value)} />
+                </p>
+              </CardContent>
+            </Card>
+          </TiltCard>
         ))}
       </div>
       <Card>

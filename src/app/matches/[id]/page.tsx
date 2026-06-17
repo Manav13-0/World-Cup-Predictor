@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
 import { prisma } from "@/lib/prisma";
-import { formatKickoff, formatPredictionLabel } from "@/lib/utils";
+import { formatKickoff, formatPredictionLabel, matchStatusLabel } from "@/lib/utils";
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,13 +28,22 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
 
   return (
     <PageShell title={`${match.homeTeam.name} vs ${match.awayTeam.name}`} description={formatKickoff(match.kickoff)}>
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <Card>
           <CardContent className="p-6">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Badge className={locked ? "border-amber-400/20 bg-amber-400/10 text-amber-100" : "border-emerald-400/20 bg-emerald-400/10 text-emerald-100"}>
+                {locked ? "Locked" : "Open"}
+              </Badge>
+              <Badge>{matchStatusLabel(match.status)}</Badge>
+            </div>
+            <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
               <TeamBlock name={match.homeTeam.name} flag={match.homeTeam.flag} />
-              <div className="rounded-md bg-muted px-5 py-4 text-center text-3xl font-semibold">
-                {match.homeScore ?? "-"} : {match.awayScore ?? "-"}
+              <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.05] px-6 py-5 text-center shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">Score</div>
+                <div className="mt-1 text-4xl font-semibold">
+                  {match.homeScore ?? "-"} : {match.awayScore ?? "-"}
+                </div>
               </div>
               <TeamBlock name={match.awayTeam.name} flag={match.awayTeam.flag} />
             </div>
@@ -72,7 +81,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {match.predictions.map((prediction) => (
-            <div key={prediction.id} className="rounded-md border p-3">
+            <div key={prediction.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="font-medium">{prediction.user.name}</p>
               <p className="text-sm text-muted-foreground">
                 {formatPredictionLabel(prediction.prediction, match.homeTeam.name, match.awayTeam.name)}{" "}
