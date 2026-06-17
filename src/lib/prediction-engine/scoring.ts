@@ -70,6 +70,7 @@ export async function awardFinishedMatch(matchId: string) {
   if (!match || match.status !== "FINISHED") return { updated: 0 };
 
   let updated = 0;
+  const awards = new Map<string, number>();
 
   for (const prediction of match.predictions) {
     const scored = await retryWriteConflict(async () =>
@@ -115,15 +116,27 @@ export async function awardFinishedMatch(matchId: string) {
           });
         }
 
-        return true;
+        return {
+          userId: currentPrediction.userId,
+          pointDelta
+        };
       })
     );
 
-    if (scored) updated += 1;
+    if (scored) {
+      updated += 1;
+      if (scored.pointDelta > 0) {
+        awards.set(scored.userId, (awards.get(scored.userId) ?? 0) + scored.pointDelta);
+      }
+    }
   }
 
   await cacheDel("leaderboard:global");
-  await emitSocketEvent("points_awarded", { matchId, updated });
+  await emitSocketEvent("points_awarded", {
+    matchId,
+    updated,
+    awards: Array.from(awards.entries()).map(([userId, points]) => ({ userId, points }))
+  });
   await emitSocketEvent("leaderboard_updated", { matchId });
 
   return { updated };

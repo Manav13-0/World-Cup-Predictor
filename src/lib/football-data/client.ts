@@ -31,6 +31,22 @@ type FootballDataMatch = {
   };
 };
 
+type FootballDataScorer = {
+  player: {
+    id: number;
+    name: string;
+    nationality?: string | null;
+  };
+  team: FootballDataTeam;
+  goals?: number | null;
+  assists?: number | null;
+  penalties?: number | null;
+};
+
+type FootballDataScorersResponse = {
+  scorers: FootballDataScorer[];
+};
+
 function assertApiKey() {
   if (!env.FOOTBALL_DATA_API_KEY) {
     throw new Error("FOOTBALL_DATA_API_KEY is required for football-data synchronization.");
@@ -93,7 +109,8 @@ export const footballData = {
         }
       },
       league: {
-        round: match.stage
+        round: match.stage,
+        group: match.group
       },
       teams: {
         home: {
@@ -136,7 +153,8 @@ export const footballData = {
         }
       },
       league: {
-        round: match.stage
+        round: match.stage,
+        group: match.group
       },
       teams: {
         home: {
@@ -179,7 +197,8 @@ export const footballData = {
         }
       },
       league: {
-        round: match.stage
+        round: match.stage,
+        group: match.group
       },
       teams: {
         home: {
@@ -217,7 +236,30 @@ export const footballData = {
         logo: team.crest
       }
     }));
+  },
+  scorers: async (options?: { competition?: string; season?: number; limit?: number }) => {
+    const { competition, season } = resolvedFootballDataEnv(options);
+    const limit = options?.limit ?? 10;
+    const data = await request<FootballDataScorersResponse>(
+      `/competitions/${competition}/scorers?season=${season}&limit=${limit}`,
+      900
+    );
+
+    return data.scorers.map((scorer) => ({
+      id: scorer.player.id,
+      name: scorer.player.name,
+      nationality: scorer.player.nationality,
+      team: {
+        id: scorer.team.id,
+        name: scorer.team.name ?? "TBD",
+        code: scorer.team.tla,
+        crest: scorer.team.crest
+      },
+      goals: scorer.goals ?? 0,
+      assists: scorer.assists ?? 0,
+      penalties: scorer.penalties ?? 0
+    }));
   }
 };
 
-export type { FootballDataTeam, FootballDataMatch };
+export type { FootballDataTeam, FootballDataMatch, FootballDataScorer };

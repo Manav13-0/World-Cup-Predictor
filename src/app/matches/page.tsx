@@ -20,6 +20,7 @@ const STATUS_TABS = [
 const STAGES = [
   { label: "All stages", value: "" },
   { label: "Group Stage", value: "GROUP_STAGE" },
+  { label: "Round of 32", value: "LAST_32" },
   { label: "Round of 16", value: "LAST_16" },
   { label: "Quarter Finals", value: "QUARTER_FINALS" },
   { label: "Semi Finals", value: "SEMI_FINALS" },

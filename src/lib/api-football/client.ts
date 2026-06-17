@@ -15,7 +15,7 @@ type ApiFixture = {
     status: { short: string; long: string };
     venue?: { name?: string; city?: string };
   };
-  league: { round?: string };
+  league: { round?: string; group?: string | null };
   teams: {
     home: { id: number | null; name: string; logo?: string; winner?: boolean | null };
     away: { id: number | null; name: string; logo?: string; winner?: boolean | null };

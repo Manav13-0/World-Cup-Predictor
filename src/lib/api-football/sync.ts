@@ -91,6 +91,7 @@ async function upsertFixture(fixture: ApiFixture) {
     stadium: fixture.fixture.venue?.name,
     city: fixture.fixture.venue?.city,
     round: fixture.league.round,
+    group: fixture.league.group,
     homeScore: fixture.goals.home,
     awayScore: fixture.goals.away,
     status: statusFromApi(fixture.fixture.status.short),
