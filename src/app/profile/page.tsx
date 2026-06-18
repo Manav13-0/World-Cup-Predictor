@@ -201,7 +201,7 @@ export default async function ProfilePage() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-sm leading-6 text-muted-foreground">
-                  Pick a favorite team on the left and we'll pin their fixtures and stats here.
+                  Pick a favorite team on the left and we will pin their fixtures and stats here.
                 </div>
               )}
             </CardContent>
