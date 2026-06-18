@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
 import { prisma } from "@/lib/prisma";
+import { getMatchInsights } from "@/lib/match-insights";
 import { formatKickoff, formatPredictionLabel, matchStatusLabel } from "@/lib/utils";
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,6 +25,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
 
   if (!match) notFound();
 
+  const insights = await getMatchInsights(match.id, match.homeTeam.name, match.awayTeam.name);
   const locked = match.kickoff <= new Date() || match.status !== "SCHEDULED";
 
   return (
@@ -74,6 +76,29 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Match Prediction Insights</CardTitle>
+            <Badge>{insights.total} public picks</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-3">
+          {insights.rows.map((row) => (
+            <div key={row.prediction} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium">{row.label}</p>
+                <p className="text-2xl font-semibold">{row.percentage}%</p>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-amber-300" style={{ width: `${row.percentage}%` }} />
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{row.count} predictions</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <Card className="mt-6">
         <CardHeader>

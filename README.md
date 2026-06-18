@@ -111,6 +111,20 @@ Set `SOCKET_SERVER_URL` and `NEXT_PUBLIC_SOCKET_SERVER_URL` to the live socket h
 8. Run `npx prisma db push` against production MongoDB.
 9. Run `npm run seed` only if demo data is desired.
 
+## Render Deployment
+
+If you want to deploy the socket server separately, use the included `render.yaml` blueprint.
+
+1. Push this repo to GitHub.
+2. In Render, choose **New +** and create a service from the repository.
+3. Use `render.yaml` to create:
+   - one web service for the Next.js app
+   - one web service for the Socket.io bridge
+4. Add the production environment variables in Render for both services.
+5. After the socket service deploys, copy its public URL.
+6. Set `SOCKET_SERVER_URL` and `NEXT_PUBLIC_SOCKET_SERVER_URL` in your app deployment to that URL.
+7. Redeploy the web app so the client connects to the live socket host.
+
 ## Docker
 
 ```bash

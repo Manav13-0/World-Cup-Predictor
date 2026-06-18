@@ -30,7 +30,7 @@ function BracketMatch({ match }: { match: MatchWithTeams }) {
       <div className="mb-3 flex items-center justify-between gap-3">
         <Badge className="border-amber-300/20 bg-amber-400/10 text-amber-100">{matchStatusLabel(match.status)}</Badge>
         <Button asChild size="icon" variant="ghost" className="h-8 w-8 rounded-full">
-          <Link href={`/matches/${match.id}`} aria-label="Open match">
+          <Link href={`/matches/${match.id}`} aria-label="Open match" prefetch={false}>
             <ArrowUpRight size={15} />
           </Link>
         </Button>

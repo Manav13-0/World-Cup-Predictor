@@ -17,6 +17,7 @@ model User {
   role               Role         @default(USER)
   totalPoints        Int          @default(0)
   correctPredictions Int          @default(0)
+  favoriteTeamId     String?      @db.ObjectId
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
   accounts           Account[]
@@ -24,8 +25,10 @@ model User {
   predictions        Prediction[]
   leaguesOwned       League[]
   memberships        LeagueMember[]
+  favoriteTeam       Team?        @relation("FavoriteTeam", fields: [favoriteTeamId], references: [id], onDelete: SetNull)
 
   @@index([totalPoints, correctPredictions, createdAt])
+  @@index([favoriteTeamId])
 }
 
 model Account {
@@ -73,6 +76,7 @@ model Team {
   fifaRanking Int?
   homeMatches Match[] @relation("HomeTeam")
   awayMatches Match[] @relation("AwayTeam")
+  favoriteFans User[]  @relation("FavoriteTeam")
 }
 
 model Match {

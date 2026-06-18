@@ -18,8 +18,42 @@ export const predictionSchema = z
     predictedHomeScore: z.number().int().min(0).max(30).nullable().optional(),
     predictedAwayScore: z.number().int().min(0).max(30).nullable().optional()
   })
-  .refine((value) => value.predictedHomeScore !== undefined && value.predictedAwayScore !== undefined, {
-    message: "Exact score predictions require both scores."
+  .superRefine((value, context) => {
+    if (
+      value.predictedHomeScore === undefined ||
+      value.predictedHomeScore === null ||
+      value.predictedAwayScore === undefined ||
+      value.predictedAwayScore === null
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Exact score predictions require both scores."
+      });
+      return;
+    }
+
+    if (value.prediction === "DRAW" && value.predictedHomeScore !== value.predictedAwayScore) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Draw predictions must have equal scores."
+      });
+      return;
+    }
+
+    if (value.prediction === "HOME_WIN" && value.predictedHomeScore <= value.predictedAwayScore) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Home win predictions must have the home score higher."
+      });
+      return;
+    }
+
+    if (value.prediction === "AWAY_WIN" && value.predictedAwayScore <= value.predictedHomeScore) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Away win predictions must have the away score higher."
+      });
+    }
   });
 
 export const leagueCreateSchema = z.object({
@@ -28,6 +62,10 @@ export const leagueCreateSchema = z.object({
 
 export const leagueJoinSchema = z.object({
   code: z.string().trim().min(4).max(12)
+});
+
+export const favoriteTeamSchema = z.object({
+  favoriteTeamId: z.string().trim().min(1).nullable().optional()
 });
 
 export const manualMatchSchema = z.object({

@@ -63,7 +63,7 @@ export function MatchCard({ match }: { match: MatchWithTeams }) {
             </p>
           </div>
           <Button asChild className="w-full">
-            <Link href={`/matches/${match.id}`}>
+            <Link href={`/matches/${match.id}`} prefetch={false}>
               Open Match
               <ArrowUpRight size={16} />
             </Link>

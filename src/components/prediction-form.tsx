@@ -22,6 +22,53 @@ export function PredictionForm({
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [prediction, setPrediction] = useState<PredictionType>("HOME_WIN");
+  const [homeScore, setHomeScore] = useState(1);
+  const [awayScore, setAwayScore] = useState(0);
+
+  function syncScores(nextPrediction: PredictionType) {
+    setPrediction(nextPrediction);
+
+    if (nextPrediction === "DRAW") {
+      setHomeScore(1);
+      setAwayScore(1);
+      return;
+    }
+
+    if (nextPrediction === "HOME_WIN") {
+      setHomeScore(1);
+      setAwayScore(0);
+      return;
+    }
+
+    setHomeScore(0);
+    setAwayScore(1);
+  }
+
+  function handleHomeScoreChange(nextValue: string) {
+    const value = Number(nextValue);
+    const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+    setHomeScore(safeValue);
+    if (safeValue > awayScore) {
+      setPrediction("HOME_WIN");
+    } else if (safeValue < awayScore) {
+      setPrediction("AWAY_WIN");
+    } else {
+      setPrediction("DRAW");
+    }
+  }
+
+  function handleAwayScoreChange(nextValue: string) {
+    const value = Number(nextValue);
+    const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+    setAwayScore(safeValue);
+    if (homeScore > safeValue) {
+      setPrediction("HOME_WIN");
+    } else if (homeScore < safeValue) {
+      setPrediction("AWAY_WIN");
+    } else {
+      setPrediction("DRAW");
+    }
+  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,6 +95,8 @@ export function PredictionForm({
   return (
     <form onSubmit={submit} className="space-y-5">
       <input type="hidden" name="prediction" value={prediction} />
+      <input type="hidden" name="predictedHomeScore" value={homeScore} />
+      <input type="hidden" name="predictedAwayScore" value={awayScore} />
       <div className="grid gap-2">
         {(["HOME_WIN", "DRAW", "AWAY_WIN"] as PredictionType[]).map((option) => {
           const active = prediction === option;
@@ -56,7 +105,7 @@ export function PredictionForm({
               key={option}
               type="button"
               disabled={locked}
-              onClick={() => setPrediction(option)}
+              onClick={() => syncScores(option)}
               className={[
                 "relative flex w-full items-center justify-between overflow-hidden rounded-2xl border px-4 py-3 text-left transition-all duration-300",
                 active
@@ -80,8 +129,24 @@ export function PredictionForm({
         })}
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Input name="predictedHomeScore" type="number" min={0} max={30} defaultValue={1} disabled={locked} />
-        <Input name="predictedAwayScore" type="number" min={0} max={30} defaultValue={0} disabled={locked} />
+        <Input
+          name="predictedHomeScore"
+          type="number"
+          min={0}
+          max={30}
+          value={homeScore}
+          onChange={(event) => handleHomeScoreChange(event.target.value)}
+          disabled={locked}
+        />
+        <Input
+          name="predictedAwayScore"
+          type="number"
+          min={0}
+          max={30}
+          value={awayScore}
+          onChange={(event) => handleAwayScoreChange(event.target.value)}
+          disabled={locked}
+        />
       </div>
       <Button className="w-full" disabled={locked || loading}>
         <CheckCircle2 size={16} />

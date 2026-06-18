@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: predictionleague-web
+    env: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: API_FOOTBALL_KEY
+        sync: false
+      - key: API_FOOTBALL_LEAGUE_ID
+        value: "1"
+      - key: API_FOOTBALL_SEASON
+        value: "2026"
+      - key: FOOTBALL_DATA_API_KEY
+        sync: false
+      - key: FOOTBALL_DATA_COMPETITION_CODE
+        value: WC
+      - key: FOOTBALL_DATA_SEASON
+        value: "2026"
+      - key: REDIS_URL
+        sync: false
+      - key: REDIS_TOKEN
+        sync: false
+      - key: SOCKET_SERVER_URL
+        sync: false
+      - key: NEXT_PUBLIC_SOCKET_SERVER_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+
+  - type: web
+    name: predictionleague-socket
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run socket
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXTAUTH_URL
+        sync: false
