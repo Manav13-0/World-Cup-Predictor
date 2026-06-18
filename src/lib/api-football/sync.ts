@@ -44,39 +44,42 @@ async function ensureTeams(fixture: ApiFixture) {
     return null;
   }
 
-  const homeName = fixture.teams.home.name ?? "TBD";
-  const awayName = fixture.teams.away.name ?? "TBD";
-
   const [homeTeam, awayTeam] = await Promise.all([
-    prisma.team.upsert({
-      where: { apiTeamId: fixture.teams.home.id as number },
-      create: {
-        apiTeamId: fixture.teams.home.id as number,
-        name: homeName,
-        shortName: shortTeamName(homeName),
-        flag: fixture.teams.home.logo
-      },
-      update: {
-        name: homeName,
-        flag: fixture.teams.home.logo
-      }
-    }),
-    prisma.team.upsert({
-      where: { apiTeamId: fixture.teams.away.id as number },
-      create: {
-        apiTeamId: fixture.teams.away.id as number,
-        name: awayName,
-        shortName: shortTeamName(awayName),
-        flag: fixture.teams.away.logo
-      },
-      update: {
-        name: awayName,
-        flag: fixture.teams.away.logo
-      }
-    })
+    resolveTeam(fixture.teams.home),
+    resolveTeam(fixture.teams.away)
   ]);
 
+  if (!homeTeam || !awayTeam) return null;
+
   return { homeTeam, awayTeam };
+}
+
+async function resolveTeam(team: ApiFixture["teams"]["home"]) {
+  if (!hasTeamId(team)) return null;
+
+  const apiTeamId = team.id as number;
+  const name = team.name ?? "TBD";
+  const existing = await prisma.team.findUnique({
+    where: { apiTeamId }
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return prisma.team.upsert({
+    where: { apiTeamId },
+    create: {
+      apiTeamId,
+      name,
+      shortName: shortTeamName(name),
+      flag: team.logo
+    },
+    update: {
+      name,
+      flag: team.logo
+    }
+  });
 }
 
 async function upsertFixture(fixture: ApiFixture) {
@@ -115,13 +118,19 @@ async function upsertFixture(fixture: ApiFixture) {
   return match;
 }
 
-async function upsertFixturesSequentially(fixtures: ApiFixture[]) {
+async function upsertFixturesWithConcurrency(fixtures: ApiFixture[], concurrency: number) {
   let synced = 0;
 
-  for (const fixture of fixtures) {
-    const match = await upsertFixture(fixture);
-    if (match) synced += 1;
-  }
+  let cursor = 0;
+  const workers = Array.from({ length: Math.max(1, Math.min(concurrency, fixtures.length)) }, async () => {
+    while (cursor < fixtures.length) {
+      const index = cursor++;
+      const match = await upsertFixture(fixtures[index]);
+      if (match) synced += 1;
+    }
+  });
+
+  await Promise.all(workers);
 
   return synced;
 }
@@ -157,15 +166,15 @@ export async function syncTeams(options?: { competition?: string; season?: numbe
 export async function syncFixtures(options?: { competition?: string; season?: number }) {
   await syncTeams(options);
   const fixtures = await provider().fixtures(options);
-  return upsertFixturesSequentially(fixtures);
+  return upsertFixturesWithConcurrency(fixtures, 4);
 }
 
 export async function syncLiveMatches(options?: { competition?: string; season?: number }) {
   const fixtures = await provider().liveMatches(options);
-  return upsertFixturesSequentially(fixtures);
+  return upsertFixturesWithConcurrency(fixtures, 4);
 }
 
 export async function syncCompletedMatches(options?: { competition?: string; season?: number }) {
   const fixtures = await provider().completedMatches(options);
-  return upsertFixturesSequentially(fixtures);
+  return upsertFixturesWithConcurrency(fixtures, 2);
 }

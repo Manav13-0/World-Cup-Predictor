@@ -64,51 +64,57 @@ export function calculatePredictionPoints(
 export async function awardFinishedMatch(matchId: string) {
   const match = await prisma.match.findUnique({
     where: { id: matchId },
-    include: { predictions: { select: { id: true } } }
+    include: {
+      predictions: {
+        select: {
+          id: true,
+          userId: true,
+          points: true,
+          isCorrect: true,
+          predictedHomeScore: true,
+          predictedAwayScore: true,
+          prediction: true
+        }
+      }
+    }
   });
 
   if (!match || match.status !== "FINISHED") return { updated: 0 };
 
-  let updated = 0;
-  const awards = new Map<string, number>();
+  const existingUsers = await prisma.user.findMany({
+    where: { id: { in: match.predictions.map((prediction) => prediction.userId) } },
+    select: { id: true }
+  });
+  const existingUserIds = new Set(existingUsers.map((user) => user.id));
 
-  for (const prediction of match.predictions) {
-    const scored = await retryWriteConflict(async () =>
-      prisma.$transaction(async (tx) => {
-        const currentPrediction = await tx.prediction.findUnique({
-          where: { id: prediction.id }
-        });
+  const result = await retryWriteConflict(async () =>
+    prisma.$transaction(async (tx) => {
+      let updated = 0;
+      const awards = new Map<string, number>();
 
-        if (!currentPrediction) return false;
-
-        const user = await tx.user.findUnique({
-          where: { id: currentPrediction.userId },
-          select: { id: true }
-        });
-
-        if (!user) {
+      for (const prediction of match.predictions) {
+        if (!existingUserIds.has(prediction.userId)) {
           await tx.prediction.deleteMany({
-            where: { id: currentPrediction.id }
+            where: { id: prediction.id }
           });
-
-          return false;
+          continue;
         }
 
-        const score = calculatePredictionPoints(match, currentPrediction);
-        const pointDelta = score.points - currentPrediction.points;
-        const correctDelta = Number(score.isCorrect) - Number(currentPrediction.isCorrect);
-
-        await tx.prediction.update({
-          where: { id: currentPrediction.id },
-          data: {
-            points: score.points,
-            isCorrect: score.isCorrect
-          }
-        });
+        const score = calculatePredictionPoints(match, prediction);
+        const pointDelta = score.points - prediction.points;
+        const correctDelta = Number(score.isCorrect) - Number(prediction.isCorrect);
 
         if (pointDelta !== 0 || correctDelta !== 0) {
+          await tx.prediction.update({
+            where: { id: prediction.id },
+            data: {
+              points: score.points,
+              isCorrect: score.isCorrect
+            }
+          });
+
           await tx.user.update({
-            where: { id: currentPrediction.userId },
+            where: { id: prediction.userId },
             data: {
               totalPoints: { increment: pointDelta },
               correctPredictions: { increment: correctDelta }
@@ -116,28 +122,27 @@ export async function awardFinishedMatch(matchId: string) {
           });
         }
 
-        return {
-          userId: currentPrediction.userId,
-          pointDelta
-        };
-      })
-    );
+        updated += 1;
 
-    if (scored) {
-      updated += 1;
-      if (scored.pointDelta > 0) {
-        awards.set(scored.userId, (awards.get(scored.userId) ?? 0) + scored.pointDelta);
+        if (pointDelta > 0) {
+          awards.set(prediction.userId, (awards.get(prediction.userId) ?? 0) + pointDelta);
+        }
       }
-    }
-  }
+
+      return {
+        updated,
+        awards: Array.from(awards.entries()).map(([userId, points]) => ({ userId, points }))
+      };
+    })
+  );
 
   await cacheDel("leaderboard:global");
   await emitSocketEvent("points_awarded", {
     matchId,
-    updated,
-    awards: Array.from(awards.entries()).map(([userId, points]) => ({ userId, points }))
+    updated: result.updated,
+    awards: result.awards
   });
   await emitSocketEvent("leaderboard_updated", { matchId });
 
-  return { updated };
+  return { updated: result.updated };
 }
