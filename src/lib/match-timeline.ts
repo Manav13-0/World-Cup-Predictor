@@ -8,6 +8,19 @@ export type MatchTimelineMatch = Match & {
   homeTeam: Team;
   awayTeam: Team;
   predictions: MatchTimelinePrediction[];
+  events?: Array<{
+    id: string;
+    source: string;
+    type: string;
+    detail: string;
+    teamName: string | null;
+    playerName: string | null;
+    assistName: string | null;
+    minute: number | null;
+    period: string | null;
+    happenedAt: Date | null;
+    createdAt: Date;
+  }>;
 };
 
 export type TimelineTone = "violet" | "emerald" | "amber" | "slate";
@@ -67,6 +80,30 @@ export function buildMatchTimeline(match: MatchTimelineMatch, publicPicks: numbe
       detail: `${recentPrediction.user.name} picked at ${recentPrediction.createdAt.toLocaleString()}.`,
       timestamp: recentPrediction.createdAt,
       tone: "amber"
+    });
+  }
+
+  for (const event of match.events ?? []) {
+    const title =
+      event.type === "goal"
+        ? "Goal"
+        : event.type === "yellow_card"
+          ? "Yellow card"
+          : event.type === "red_card"
+            ? "Red card"
+            : event.type === "kickoff"
+              ? "Kickoff"
+              : event.type === "full_time"
+                ? "Full time"
+                : event.type.replace(/_/g, " ");
+
+    const timestamp = event.happenedAt ?? event.createdAt;
+    const minuteLabel = event.minute !== null ? `${event.minute}'` : null;
+    items.push({
+      title,
+      detail: [minuteLabel, event.teamName, event.playerName, event.detail].filter(Boolean).join(" · "),
+      timestamp,
+      tone: event.type === "goal" ? "emerald" : event.type.includes("card") ? "amber" : "slate"
     });
   }
 

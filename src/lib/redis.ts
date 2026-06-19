@@ -50,3 +50,42 @@ export async function cacheDel(key: string) {
 
   memoryCache.delete(key);
 }
+
+export async function acquireLock(key: string, ttlSeconds: number) {
+  const lockKey = `lock:${key}`;
+  const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  if (redis) {
+    const result = await redis.set(lockKey, token, { nx: true, ex: ttlSeconds });
+    return result ? token : null;
+  }
+
+  const existing = memoryCache.get(lockKey);
+  if (existing && existing.expiresAt > Date.now()) {
+    return null;
+  }
+
+  memoryCache.set(lockKey, {
+    value: token,
+    expiresAt: Date.now() + ttlSeconds * 1000
+  });
+
+  return token;
+}
+
+export async function releaseLock(key: string, token: string) {
+  const lockKey = `lock:${key}`;
+
+  if (redis) {
+    const current = await redis.get<string>(lockKey);
+    if (current === token) {
+      await redis.del(lockKey);
+    }
+    return;
+  }
+
+  const current = memoryCache.get(lockKey);
+  if (current && current.value === token) {
+    memoryCache.delete(lockKey);
+  }
+}

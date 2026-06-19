@@ -1,12 +1,12 @@
-import { syncCompletedMatches } from "@/lib/api-football/sync";
+import { syncLiveMatches } from "@/lib/api-football/sync";
 import { apiError, json, requireAdmin } from "@/lib/http";
 import { env } from "@/lib/env";
 import { acquireLock, releaseLock } from "@/lib/redis";
 
 export async function POST(request: Request) {
-  const lock = await acquireLock("sync:results", 15 * 60);
+  const lock = await acquireLock("sync:live", 10 * 60);
   if (!lock) {
-    return json({ error: "A result sync is already running." }, 409);
+    return json({ error: "A live sync is already running." }, 409);
   }
 
   try {
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     };
     const competition = (payload.competition ?? env.FOOTBALL_DATA_COMPETITION_CODE).trim();
     const season = Number(payload.season ?? env.FOOTBALL_DATA_SEASON);
-    const synced = await syncCompletedMatches({ competition, season });
+    const synced = await syncLiveMatches({ competition, season });
     const provider = env.FOOTBALL_DATA_API_KEY ? "football-data" : env.API_FOOTBALL_KEY ? "api-football" : "unknown";
     return json({
       synced,
@@ -28,6 +28,6 @@ export async function POST(request: Request) {
   } catch (error) {
     return apiError(error);
   } finally {
-    await releaseLock("sync:results", lock);
+    await releaseLock("sync:live", lock);
   }
 }

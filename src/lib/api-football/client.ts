@@ -33,6 +33,29 @@ type ApiTeam = {
   };
 };
 
+type ApiFixtureEvent = {
+  time?: {
+    elapsed?: number | null;
+    extra?: number | null;
+  };
+  team?: {
+    id?: number | null;
+    name?: string;
+    logo?: string;
+  };
+  player?: {
+    id?: number | null;
+    name?: string;
+  };
+  assist?: {
+    id?: number | null;
+    name?: string;
+  };
+  type?: string;
+  detail?: string;
+  comments?: string | null;
+};
+
 function assertApiKey() {
   if (!env.API_FOOTBALL_KEY) {
     throw new Error("API_FOOTBALL_KEY is required for fixture synchronization.");
@@ -84,6 +107,8 @@ export const apiFootball = {
       120
     ),
   teams: () => request<ApiTeam>(`/teams?league=${env.API_FOOTBALL_LEAGUE_ID}&season=${env.API_FOOTBALL_SEASON}`, 86400)
+  ,
+  events: (fixtureId: number) => request<ApiFixtureEvent>(`/fixtures/events?fixture=${fixtureId}`, 60)
 };
 
-export type { ApiFixture, ApiTeam };
+export type { ApiFixture, ApiTeam, ApiFixtureEvent };

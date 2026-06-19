@@ -2,6 +2,7 @@ import { env } from "@/lib/env";
 
 type SocketEvent =
   | "match_updated"
+  | "match_event"
   | "leaderboard_updated"
   | "prediction_created"
   | "points_awarded"

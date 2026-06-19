@@ -98,10 +98,32 @@ model Match {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   predictions Prediction[]
+  events      MatchEvent[]
 
   @@index([status, kickoff])
   @@index([homeTeamId])
   @@index([awayTeamId])
+}
+
+model MatchEvent {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  matchId        String   @db.ObjectId
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  fingerprint    String   @unique
+  source         String
+  type           String
+  detail         String
+  teamName       String?
+  playerName     String?
+  assistName     String?
+  minute         Int?
+  period         String?
+  happenedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([matchId, createdAt])
+  @@index([matchId, minute])
+  @@index([type])
 }
 
 model Prediction {

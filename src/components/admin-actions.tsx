@@ -59,7 +59,7 @@ export function AdminActions() {
   return (
     <div className="space-y-6">
       <form
-        className="grid gap-3 rounded-md border p-4 md:grid-cols-4"
+        className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.04] p-4 sm:grid-cols-2 lg:grid-cols-4"
         onSubmit={(event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
@@ -71,24 +71,28 @@ export function AdminActions() {
       >
         <Input name="competition" placeholder="Competition code" defaultValue="WC" />
         <Input name="season" placeholder="Season" defaultValue="2026" />
-        <Button className="md:col-span-2" type="submit">
+        <Button className="sm:col-span-2 lg:col-span-2" type="submit">
           <RefreshCw size={16} />
           Sync With Selection
         </Button>
       </form>
 
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={() => sync("/api/admin/sync-fixtures")}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button className="w-full" onClick={() => sync("/api/admin/sync-fixtures")}>
           <RefreshCw size={16} />
           Sync Fixtures
         </Button>
-        <Button variant="secondary" onClick={() => sync("/api/admin/sync-results")}>
+        <Button className="w-full" variant="secondary" onClick={() => sync("/api/admin/sync-live")}>
+          <RefreshCw size={16} />
+          Sync Live Matches
+        </Button>
+        <Button className="w-full" variant="secondary" onClick={() => sync("/api/admin/sync-results")}>
           <RefreshCw size={16} />
           Sync Results
         </Button>
       </div>
 
-      <form onSubmit={createManualMatch} className="grid gap-3 rounded-md border p-4 md:grid-cols-2">
+      <form onSubmit={createManualMatch} className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.04] p-4 sm:grid-cols-2">
         <Input name="homeTeamName" placeholder="Home team" required />
         <Input name="awayTeamName" placeholder="Away team" required />
         <Input name="kickoff" type="datetime-local" required />
@@ -104,7 +108,7 @@ export function AdminActions() {
         <Input name="group" placeholder="Group" />
         <Input name="homeScore" type="number" min={0} max={30} placeholder="Home score" />
         <Input name="awayScore" type="number" min={0} max={30} placeholder="Away score" />
-        <Button className="md:col-span-2" disabled={saving}>
+        <Button className="sm:col-span-2" disabled={saving}>
           {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
           Create Manual Match
         </Button>

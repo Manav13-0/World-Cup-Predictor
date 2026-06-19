@@ -1,8 +1,14 @@
 import { syncFixtures } from "@/lib/api-football/sync";
 import { apiError, json, requireAdmin } from "@/lib/http";
 import { env } from "@/lib/env";
+import { acquireLock, releaseLock } from "@/lib/redis";
 
 export async function POST(request: Request) {
+  const lock = await acquireLock("sync:fixtures", 15 * 60);
+  if (!lock) {
+    return json({ error: "A fixture sync is already running." }, 409);
+  }
+
   try {
     await requireAdmin();
     const payload = (await request.json().catch(() => ({}))) as {
@@ -21,5 +27,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return apiError(error);
+  } finally {
+    await releaseLock("sync:fixtures", lock);
   }
 }

@@ -11,18 +11,22 @@ import { formatKickoff, formatPredictionLabel, matchStatusLabel } from "@/lib/ut
 
 export default async function MatchDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const match = await prisma.match.findUnique({
+  const match = (await prisma.match.findUnique({
     where: { id },
     include: {
       homeTeam: true,
       awayTeam: true,
+      events: {
+        orderBy: { createdAt: "desc" },
+        take: 20
+      },
       predictions: {
         include: { user: true },
         orderBy: { createdAt: "desc" },
         take: 12
       }
     }
-  });
+  })) as any;
 
   if (!match) notFound();
 
@@ -104,7 +108,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Live Match Timeline</CardTitle>
+          <CardTitle>Live Event Feed</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
           {timeline.map((item) => (
@@ -139,7 +143,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
           <CardTitle>Recent Predictions</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {match.predictions.map((prediction) => (
+          {match.predictions.map((prediction: any) => (
             <div key={prediction.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="font-medium">{prediction.user.name}</p>
               <p className="text-sm text-muted-foreground">

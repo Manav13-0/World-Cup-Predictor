@@ -154,6 +154,34 @@ export default async function BracketPage() {
         </CardContent>
       </Card>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Projected Round of 16</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3 lg:grid-cols-2">
+          {automation.projectedRoundOf16.length ? (
+            automation.projectedRoundOf16.map((pair, index) => (
+              <div key={`${pair.home.team.id}-${pair.away.team.id}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Match {index + 1}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                  <div>
+                    <p className="font-semibold">{pair.home.team.name}</p>
+                    <p className="text-xs text-muted-foreground">{pair.home.groupLabel}</p>
+                  </div>
+                  <div className="hidden text-center text-sm text-muted-foreground sm:block">vs</div>
+                  <div className="text-right sm:text-left">
+                    <p className="font-semibold">{pair.away.team.name}</p>
+                    <p className="text-xs text-muted-foreground">{pair.away.groupLabel}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">Projected pairings will appear once more groups are qualified.</p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 xl:grid-cols-3">
         {stages.map((stage) => (
           <Card key={stage.key}>

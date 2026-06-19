@@ -42,9 +42,9 @@ export function MatchCard({ match }: { match: MatchWithTeams }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-5 p-5 sm:p-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+          <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
             <TeamIdentity team={match.homeTeam} align="right" />
-            <div className="min-w-[92px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.05] px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <div className="mx-auto min-w-[92px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.05] px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] sm:mx-0">
               <div className="text-[10px] font-semibold uppercase tracking-[0.35em] text-muted-foreground">Score</div>
               <div className="mt-1 text-2xl font-semibold tracking-tight">
                 {match.homeScore ?? "-"} : {match.awayScore ?? "-"}

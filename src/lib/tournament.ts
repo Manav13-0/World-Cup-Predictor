@@ -46,6 +46,10 @@ export type BracketAutomation = {
   totalGroups: number;
   qualifiers: BracketQualifier[];
   thirdPlaceTeams: BracketQualifier[];
+  projectedRoundOf16: Array<{
+    home: BracketQualifier;
+    away: BracketQualifier;
+  }>;
 };
 
 const BRACKET_STAGE_ORDER = ["LAST_32", "LAST_16", "QUARTER_FINALS", "SEMI_FINALS", "THIRD_PLACE", "FINAL"] as const;
@@ -278,6 +282,13 @@ export async function getBracketAutomation(): Promise<BracketAutomation> {
     groupsReady: groups.filter((group) => group.rows.length >= 2).length,
     totalGroups: groups.length,
     qualifiers,
-    thirdPlaceTeams
+    thirdPlaceTeams,
+    projectedRoundOf16: qualifiers.reduce<Array<{ home: BracketQualifier; away: BracketQualifier }>>((pairs, current, index, list) => {
+      if (index % 2 !== 0) return pairs;
+      const next = list[index + 1];
+      if (!next) return pairs;
+      pairs.push({ home: current, away: next });
+      return pairs;
+    }, [])
   };
 }

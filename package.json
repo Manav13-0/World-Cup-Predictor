@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
-    "socket": "tsx src/server/socket.ts"
+    "socket": "tsx src/server/socket.ts",
+    "sync:worker": "tsx src/server/live-sync-worker.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

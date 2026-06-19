@@ -50,7 +50,7 @@ export default async function ComparePage({
     <PageShell title="Team Comparison" description="Compare tournament form and head-to-head records.">
       <form method="get">
         <Card className="mb-6">
-          <CardContent className="grid gap-4 p-5 lg:grid-cols-[1fr_auto_1fr_auto] lg:items-end">
+          <CardContent className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto_1fr_auto] lg:items-end">
             <label className="block">
               <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">Team A</span>
               <Select defaultValue={teamAId} name="teamA">
@@ -74,14 +74,14 @@ export default async function ComparePage({
                 ))}
               </Select>
             </label>
-            <Button type="submit" className="lg:self-end">
+            <Button type="submit" className="w-full lg:self-end">
               Compare Teams
             </Button>
           </CardContent>
         </Card>
       </form>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>{comparison.teamA.team.name}</CardTitle>
@@ -89,7 +89,7 @@ export default async function ComparePage({
               {comparison.teamA.team.code ?? "WC"}
             </Badge>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               ["Played", comparison.teamA.played],
               ["Wins", comparison.teamA.wins],
@@ -112,7 +112,7 @@ export default async function ComparePage({
               {comparison.teamB.team.code ?? "WC"}
             </Badge>
           </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
               ["Played", comparison.teamB.played],
               ["Wins", comparison.teamB.wins],
@@ -135,7 +135,7 @@ export default async function ComparePage({
             <CardTitle>Head-to-head</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
                 <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{comparison.teamA.team.name}</p>
                 <p className="mt-2 text-3xl font-semibold">{comparison.headToHead.teamAWins}</p>
