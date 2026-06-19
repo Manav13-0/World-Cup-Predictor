@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
-import { getBracketStages, type MatchWithTeams } from "@/lib/tournament";
+import { getBracketAutomation, getBracketStages, type MatchWithTeams } from "@/lib/tournament";
 import { formatKickoff, matchStatusLabel } from "@/lib/utils";
 
 function TeamLine({ teamName, flag, score }: { teamName: string; flag?: string | null; score: number | null }) {
@@ -54,7 +54,7 @@ function BracketMatch({ match }: { match: MatchWithTeams }) {
 }
 
 export default async function BracketPage() {
-  const stages = await getBracketStages();
+  const [stages, automation] = await Promise.all([getBracketStages(), getBracketAutomation()]);
   const totalKnockoutMatches = stages.reduce((total, stage) => total + stage.matches.length, 0);
   const finalMatch = stages.find((stage) => stage.key === "FINAL")?.matches[0];
 
@@ -83,6 +83,76 @@ export default async function BracketPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader className="flex-row items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">Bracket automation</p>
+            <CardTitle className="mt-2">Auto-qualified teams</CardTitle>
+          </div>
+          <Badge className="border-emerald-400/20 bg-emerald-400/10 text-emerald-100">
+            {automation.groupsReady}/{automation.totalGroups} groups ready
+          </Badge>
+        </CardHeader>
+        <CardContent className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-muted-foreground">Qualified teams</p>
+            <div className="grid gap-3">
+              {automation.qualifiers.length ? (
+                automation.qualifiers.map((row) => (
+                  <div key={`${row.groupKey}-${row.team.id}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{row.team.name}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{row.groupLabel}</p>
+                      </div>
+                      <Badge className="border-violet-400/20 bg-violet-400/10 text-violet-100">#{row.rank}</Badge>
+                    </div>
+                    <div className="mt-3 grid grid-cols-4 gap-2 text-center text-sm">
+                      {[
+                        ["Pts", row.points],
+                        ["GD", row.goalDifference],
+                        ["GF", row.goalsFor],
+                        ["W", row.wins]
+                      ].map(([label, value]) => (
+                        <div key={label as string} className="rounded-xl border border-white/10 bg-background/30 p-2">
+                          <p className="text-xs text-muted-foreground">{label}</p>
+                          <p className="mt-1 font-semibold">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No qualified teams available yet.</p>
+              )}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-muted-foreground">Third place contenders</p>
+            <div className="grid gap-3">
+              {automation.thirdPlaceTeams.length ? (
+                automation.thirdPlaceTeams.map((row) => (
+                  <div key={`${row.groupKey}-${row.team.id}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-semibold">{row.team.name}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{row.groupLabel}</p>
+                      </div>
+                      <Badge className="border-amber-400/20 bg-amber-400/10 text-amber-100">3rd</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {row.points} pts · {row.goalDifference} GD · {row.goalsFor} GF
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Third-place teams will appear here after group matches finish.</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-3">
         {stages.map((stage) => (

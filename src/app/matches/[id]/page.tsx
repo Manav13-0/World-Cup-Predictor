@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
 import { prisma } from "@/lib/prisma";
+import { buildMatchTimeline } from "@/lib/match-timeline";
 import { getMatchInsights } from "@/lib/match-insights";
 import { formatKickoff, formatPredictionLabel, matchStatusLabel } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
   if (!match) notFound();
 
   const insights = await getMatchInsights(match.id, match.homeTeam.name, match.awayTeam.name);
+  const timeline = buildMatchTimeline(match, insights.total);
   const locked = match.kickoff <= new Date() || match.status !== "SCHEDULED";
 
   return (
@@ -95,6 +97,38 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
                 <div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-amber-300" style={{ width: `${row.percentage}%` }} />
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{row.count} predictions</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Live Match Timeline</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {timeline.map((item) => (
+            <div key={`${item.title}-${item.timestamp.toISOString()}`} className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div
+                className={`mt-1 h-3 w-3 rounded-full ${
+                  item.tone === "emerald"
+                    ? "bg-emerald-400"
+                    : item.tone === "amber"
+                      ? "bg-amber-300"
+                      : item.tone === "violet"
+                        ? "bg-violet-400"
+                        : "bg-slate-400"
+                }`}
+              />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium">{item.title}</p>
+                  <Badge className="border-white/10 bg-white/10 text-[10px] uppercase tracking-[0.3em]">
+                    {item.timestamp.toLocaleString()}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{item.detail}</p>
+              </div>
             </div>
           ))}
         </CardContent>

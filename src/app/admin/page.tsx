@@ -57,6 +57,24 @@ export default async function AdminPage() {
         ))}
       </div>
 
+      <div className="mb-6 grid gap-4 lg:grid-cols-4">
+        {[
+          ["Home win picks", analytics.predictionBreakdown.homeWins],
+          ["Draw picks", analytics.predictionBreakdown.draws],
+          ["Away win picks", analytics.predictionBreakdown.awayWins],
+          ["Live sync", analytics.syncHealth.liveMatches]
+        ].map(([label, value]) => (
+          <Card key={label as string}>
+            <CardContent className="p-5">
+              <p className="text-sm text-muted-foreground">{label}</p>
+              <p className="mt-2 text-3xl font-semibold">
+                <AnimatedCounter value={Number(value)} />
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <Card>
           <CardHeader>
@@ -100,6 +118,59 @@ export default async function AdminPage() {
             <p className="text-sm text-muted-foreground">
               Latest update: {analytics.syncHealth.latestMatchUpdate ? analytics.syncHealth.latestMatchUpdate.updatedAt.toLocaleString() : "No sync yet"}
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Top users</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {analytics.topUsers.length ? (
+              analytics.topUsers.map((user, index) => (
+                <div key={user.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="border-white/10 bg-white/10 text-[10px] uppercase tracking-[0.3em]">{index + 1}</Badge>
+                      <p className="font-medium">{user.name}</p>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {user.correctPredictions} correct · {user.predictions} predictions
+                    </p>
+                  </div>
+                  <p className="text-2xl font-semibold">{user.totalPoints}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No user activity yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent sync activity</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {analytics.recentMatches.length ? (
+              analytics.recentMatches.map((match) => (
+                <div key={match.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-medium">
+                      {match.homeTeam.name} {match.homeScore ?? "-"}:{match.awayScore ?? "-"} {match.awayTeam.name}
+                    </p>
+                    <Badge className="border-white/10 bg-white/10 text-[10px] uppercase tracking-[0.3em]">{match.status}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Updated {match.updatedAt.toLocaleString()} · Kickoff {match.kickoff.toLocaleString()}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No recent sync activity yet.</p>
+            )}
           </CardContent>
         </Card>
       </div>

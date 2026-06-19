@@ -6,8 +6,52 @@ export type MostPredictedTeam = {
   count: number;
 };
 
-export async function getAdminAnalytics() {
-  const [users, matches, leagues, predictionCount, leagueRows, predictionRows] = await Promise.all([
+export type AdminTopUser = {
+  id: string;
+  name: string;
+  totalPoints: number;
+  correctPredictions: number;
+  predictions: number;
+};
+
+export type AdminRecentMatch = {
+  id: string;
+  homeTeam: { name: string; code: string | null };
+  awayTeam: { name: string; code: string | null };
+  status: string;
+  kickoff: Date;
+  updatedAt: Date;
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+export type AdminAnalytics = {
+  counts: {
+    users: number;
+    matches: number;
+    leagues: number;
+    predictions: number;
+    activeLeagues: number;
+  };
+  syncHealth: {
+    liveMatches: number;
+    finishedMatches: number;
+    scheduledMatches: number;
+    latestMatchUpdate: { updatedAt: Date } | null;
+  };
+  predictionsPerMatch: number;
+  mostPredictedTeams: MostPredictedTeam[];
+  predictionBreakdown: {
+    homeWins: number;
+    draws: number;
+    awayWins: number;
+  };
+  topUsers: AdminTopUser[];
+  recentMatches: AdminRecentMatch[];
+};
+
+export async function getAdminAnalytics(): Promise<AdminAnalytics> {
+  const [users, matches, leagues, predictionCount, leagueRows, predictionRows, topUsers, recentMatches] = await Promise.all([
     prisma.user.count(),
     prisma.match.count(),
     prisma.league.count(),
@@ -20,6 +64,35 @@ export async function getAdminAnalytics() {
       select: {
         prediction: true,
         matchId: true
+      }
+    }),
+    prisma.user.findMany({
+      orderBy: [{ totalPoints: "desc" }, { correctPredictions: "desc" }, { createdAt: "asc" }],
+      take: 5,
+      select: {
+        id: true,
+        name: true,
+        totalPoints: true,
+        correctPredictions: true,
+        _count: {
+          select: {
+            predictions: true
+          }
+        }
+      }
+    }),
+    prisma.match.findMany({
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        status: true,
+        kickoff: true,
+        updatedAt: true,
+        homeScore: true,
+        awayScore: true,
+        homeTeam: { select: { name: true, code: true } },
+        awayTeam: { select: { name: true, code: true } }
       }
     })
   ]);
@@ -60,6 +133,12 @@ export async function getAdminAnalytics() {
     .sort((left, right) => right.count - left.count)
     .slice(0, 5);
 
+  const predictionBreakdown = {
+    homeWins: predictionRows.filter((prediction) => prediction.prediction === "HOME_WIN").length,
+    draws: predictionRows.filter((prediction) => prediction.prediction === "DRAW").length,
+    awayWins: predictionRows.filter((prediction) => prediction.prediction === "AWAY_WIN").length
+  };
+
   const activeLeagues = leagueRows.filter((league) => league.members.length > 0).length;
 
   return {
@@ -77,6 +156,15 @@ export async function getAdminAnalytics() {
       latestMatchUpdate
     },
     predictionsPerMatch: matches ? Math.round((predictionCount / matches) * 10) / 10 : 0,
-    mostPredictedTeams
+    mostPredictedTeams,
+    predictionBreakdown,
+    topUsers: topUsers.map((user) => ({
+      id: user.id,
+      name: user.name,
+      totalPoints: user.totalPoints,
+      correctPredictions: user.correctPredictions,
+      predictions: user._count.predictions
+    })),
+    recentMatches
   };
 }

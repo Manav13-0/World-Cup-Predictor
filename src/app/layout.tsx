@@ -25,6 +25,7 @@ const nav = [
   { href: "/matches", label: "Matches" },
   { href: "/standings", label: "Standings" },
   { href: "/bracket", label: "Bracket" },
+  { href: "/compare", label: "Compare" },
   { href: "/stats", label: "Stats" },
   { href: "/profile", label: "Profile" },
   { href: "/leaderboard", label: "Leaderboard" },

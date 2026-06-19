@@ -35,6 +35,19 @@ export type BracketStage = {
   matches: MatchWithTeams[];
 };
 
+export type BracketQualifier = TeamStanding & {
+  groupKey: string;
+  groupLabel: string;
+};
+
+export type BracketAutomation = {
+  totalQualified: number;
+  groupsReady: number;
+  totalGroups: number;
+  qualifiers: BracketQualifier[];
+  thirdPlaceTeams: BracketQualifier[];
+};
+
 const BRACKET_STAGE_ORDER = ["LAST_32", "LAST_16", "QUARTER_FINALS", "SEMI_FINALS", "THIRD_PLACE", "FINAL"] as const;
 
 const BRACKET_STAGE_LABELS: Record<(typeof BRACKET_STAGE_ORDER)[number], string> = {
@@ -232,4 +245,39 @@ export async function getBracketStages() {
     label: BRACKET_STAGE_LABELS[key],
     matches: buckets.get(key) ?? []
   }));
+}
+
+export async function getBracketAutomation(): Promise<BracketAutomation> {
+  const groups = await getStandings();
+  const qualifiers: BracketQualifier[] = [];
+  const thirdPlaceTeams: BracketQualifier[] = [];
+
+  for (const group of groups) {
+    const topTwo = group.rows.slice(0, 2);
+    const thirdPlace = group.rows[2];
+
+    qualifiers.push(
+      ...topTwo.map((row) => ({
+        ...row,
+        groupKey: group.key,
+        groupLabel: group.label
+      }))
+    );
+
+    if (thirdPlace) {
+      thirdPlaceTeams.push({
+        ...thirdPlace,
+        groupKey: group.key,
+        groupLabel: group.label
+      });
+    }
+  }
+
+  return {
+    totalQualified: qualifiers.length,
+    groupsReady: groups.filter((group) => group.rows.length >= 2).length,
+    totalGroups: groups.length,
+    qualifiers,
+    thirdPlaceTeams
+  };
 }
