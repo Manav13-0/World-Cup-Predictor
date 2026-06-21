@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   },
 };
 const nav = [
+  { href: "/live", label: "Live" },
   { href: "/matches", label: "Matches" },
   { href: "/standings", label: "Standings" },
   { href: "/bracket", label: "Bracket" },

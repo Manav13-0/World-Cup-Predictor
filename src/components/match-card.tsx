@@ -5,6 +5,7 @@ import { CalendarClock, Circle, MapPin, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MatchClock } from "@/components/match-clock";
 import { formatKickoff } from "@/lib/utils";
 import { matchStatusLabel } from "@/lib/utils";
 import { TiltCard } from "@/components/tilt-card";
@@ -53,6 +54,7 @@ export function MatchCard({ match }: { match: MatchWithTeams }) {
             <TeamIdentity team={match.awayTeam} />
           </div>
           <div className="space-y-2 text-sm text-muted-foreground">
+            <MatchClock kickoff={match.kickoff} status={match.status} compact className="w-full justify-center" />
             <p className="flex items-center gap-2">
               <CalendarClock size={16} />
               {formatKickoff(match.kickoff)}

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { PredictionForm } from "@/components/prediction-form";
+import { MatchClock } from "@/components/match-clock";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
@@ -45,6 +46,9 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
               </Badge>
               <Badge>{matchStatusLabel(match.status)}</Badge>
             </div>
+            <div className="mt-4">
+              <MatchClock kickoff={match.kickoff} status={match.status} />
+            </div>
             <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
               <TeamBlock name={match.homeTeam.name} flag={match.homeTeam.flag} />
               <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.12] to-white/[0.05] px-6 py-5 text-center shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
@@ -73,6 +77,7 @@ export default async function MatchDetailsPage({ params }: { params: Promise<{ i
             </div>
           </CardHeader>
           <CardContent>
+            <MatchClock kickoff={match.kickoff} status={match.status} className="mb-4 w-full justify-center" />
             <PredictionForm
               matchId={match.id}
               locked={locked}
